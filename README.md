@@ -118,7 +118,9 @@ docker run --name my-postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d post
     *You should see a message: "Database connection established and migrations completed." The database tables are automatically created by GORM.*
 
 ### Configuration (Environment Variables)
-The project uses environment variables for configuration. Default values are provided for local development:
+The project uses environment variables for configuration. For local development, these are loaded from a `.env` file in the project root.
+
+Default values are provided for local development if neither `.env` nor system variables are set:
 *   `DB_DSN`: PostgreSQL connection string (Default: `host=localhost user=postgres password=postgres dbname=postgres port=5432 sslmode=disable TimeZone=UTC`)
 *   `API_TOKEN`: Secret token for `X-API-Token` header (Default: `secret123`)
 *   `SERVER_ADDR`: Port the server listens on (Default: `:8080`)

@@ -29,12 +29,15 @@ A learning project demonstrating a modern REST API built with **Go (1.26)** usin
 - **Generate Mocks:** `mockery` (Uses configuration in `.mockery.yaml`)
 
 ### Environment Variables
+The project uses environment variables for configuration. For local development, these are loaded from a `.env` file using [godotenv](https://github.com/joho/godotenv).
+
 | Variable | Description | Default Value |
 | :--- | :--- | :--- |
 | `DB_DSN` | PostgreSQL connection string | `host=localhost user=postgres password=postgres dbname=postgres port=5432 sslmode=disable TimeZone=UTC` |
 | `API_TOKEN` | Secret token for `X-API-Token` header | `secret123` |
 | `SERVER_ADDR` | API listen address | `:8080` |
 | `LOG_LEVEL` | Logger verbosity (`debug`, `info`, `warn`, `error`) | `info` |
+| `APP_ENV` | Environment (`development`, `production`) | `production` |
 
 ## Development Conventions
 
