@@ -68,7 +68,19 @@ go test -v ./...
 
 ### Testing Strategy
 *   **Unit Tests**: Located alongside the code (e.g., `item_service_test.go`). These use mocks to isolate the component being tested.
-*   **Mocks**: We use `testify/mock` to create mock implementations of our interfaces (`ItemRepository`, `ItemService`), allowing us to test each layer in isolation.
+*   **Mocks**: We use [mockery](https://github.com/vektra/mockery) to automatically generate mock implementations of our interfaces (`ItemRepository`, `ItemService`). Mocks are stored in `internal/mocks`.
+
+#### Generating Mocks
+To generate or update mocks, you need to have `mockery` installed:
+```bash
+go install github.com/vektra/mockery/v2@latest
+```
+
+Then, run the following command in the project root:
+```bash
+mockery
+```
+The configuration for mockery is defined in `.mockery.yaml`.
 
 ---
 
