@@ -23,10 +23,22 @@ A learning project demonstrating a modern REST API built with **Go (1.26)** usin
   ```
 
 ### Commands
+The project uses [Task](https://taskfile.dev/) as a task runner for common development tasks.
+
+- **List available tasks:** `task --list` (or just `task`)
+- **Run the API:** `task run`
+- **Run Tests:** `task test` (or `task test-v` for verbose output)
+- **Generate Mocks:** `task mock`
+- **Build Binary:** `task build`
+- **Start DB:** `task db:start`
+- **Stop DB:** `task db:stop`
+- **Clean Artifacts:** `task clean`
+
+Legacy commands (still available):
 - **Install Dependencies:** `go mod tidy`
 - **Run the API:** `go run cmd/api/main.go`
-- **Run Tests:** `go test ./...` (use `-v` for verbose output)
-- **Generate Mocks:** `mockery` (Uses configuration in `.mockery.yaml`)
+- **Run Tests:** `go test ./...`
+- **Generate Mocks:** `mockery`
 
 ### Environment Variables
 The project uses environment variables for configuration. For local development, these are loaded from a `.env` file using [godotenv](https://github.com/joho/godotenv).

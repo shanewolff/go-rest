@@ -1,0 +1,82 @@
+version: '3'
+
+vars:
+  BIN_DIR: bin
+  BINARY: api
+  MAIN_PATH: cmd/api/main.go
+  POSTGRES_CONTAINER: my-postgres
+  DB_PASSWORD: postgres
+  DB_PORT: 5432
+
+tasks:
+  default:
+    cmds:
+      - task: help
+
+  help:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  run:
+    desc: Run the API server for local development
+    cmds:
+      - go run {{.MAIN_PATH}}
+
+  build:
+    desc: Build the API binary
+    cmds:
+      - go build -o {{.BIN_DIR}}/{{.BINARY}} {{.MAIN_PATH}}
+    generates:
+      - "{{.BIN_DIR}}/{{.BINARY}}"
+
+  test:
+    desc: Run all unit tests
+    cmds:
+      - go test ./...
+
+  test-v:
+    desc: Run all unit tests with verbose output
+    cmds:
+      - go test -v ./...
+
+  mock:
+    desc: Regenerate mocks using mockery
+    cmds:
+      - mockery
+    sources:
+      - internal/domain/*.go
+      - .mockery.yaml
+    generates:
+      - internal/mocks/*.go
+
+  tidy:
+    desc: Tidy go modules
+    cmds:
+      - go mod tidy
+
+  db:start:
+    desc: Start a PostgreSQL instance in Docker
+    cmds:
+      - docker run --name {{.POSTGRES_CONTAINER}} -e POSTGRES_PASSWORD={{.DB_PASSWORD}} -p {{.DB_PORT}}:5432 -d postgres
+    status:
+      - docker ps -f name={{.POSTGRES_CONTAINER}} | grep {{.POSTGRES_CONTAINER}}
+
+  db:stop:
+    desc: Stop and remove the PostgreSQL Docker container
+    cmds:
+      - docker stop {{.POSTGRES_CONTAINER}}
+      - docker rm {{.POSTGRES_CONTAINER}}
+    ignore_error: true
+
+  clean:
+    desc: Clean build artifacts and generated mocks
+    cmds:
+      - rm -rf {{.BIN_DIR}}
+      - rm -rf internal/mocks/*
+    ignore_error: true
+
+  lint:
+    desc: Run golangci-lint (requires installation)
+    cmds:
+      - golangci-lint run ./...

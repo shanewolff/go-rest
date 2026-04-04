@@ -107,15 +107,28 @@ docker run --name my-postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d post
 ```
 
 ### Setup & Run
-1.  Download dependencies:
+The project uses [Task](https://taskfile.dev/) as a task runner for a simplified developer experience.
+
+1.  List available tasks:
     ```bash
-    go mod tidy
+    task --list
     ```
-2. Start the Go server:
+2.  Start the database:
     ```bash
-    go run cmd/api/main.go
+    task db:start
     ```
-    *You should see a message: "Database connection established and migrations completed." The database tables are automatically created by GORM.*
+3.  Download dependencies:
+    ```bash
+    task tidy
+    ```
+4.  Start the Go server:
+    ```bash
+    task run
+    ```
+
+Legacy commands:
+- `go mod tidy`
+- `go run cmd/api/main.go`
 
 ### Configuration (Environment Variables)
 The project uses environment variables for configuration. For local development, these are loaded from a `.env` file in the project root.
