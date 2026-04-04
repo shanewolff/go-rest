@@ -5,7 +5,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"go-rest/internal/domain"
+	"github.com/shanewolff/go-rest/internal/domain"
 )
 
 // This package acts as the Outbound Adapter for PostgreSQL.

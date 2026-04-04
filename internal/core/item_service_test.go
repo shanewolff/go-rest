@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"go-rest/internal/domain"
-	"go-rest/internal/mocks"
+	"github.com/shanewolff/go-rest/internal/domain"
+	"github.com/shanewolff/go-rest/internal/mocks"
 )
 
 func TestGetAllItems(t *testing.T) {

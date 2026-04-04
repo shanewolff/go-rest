@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"go-rest/internal/domain"
+	"github.com/shanewolff/go-rest/internal/domain"
 )
 
 // The Core Business Logic (Application Layer).

@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"go-rest/internal/domain"
+	"github.com/shanewolff/go-rest/internal/domain"
 )
 
 // This package acts as the Inbound Adapter for Gin Web Framework.

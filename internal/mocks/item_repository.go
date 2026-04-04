@@ -3,8 +3,7 @@
 package mocks
 
 import (
-	domain "go-rest/internal/domain"
-
+	domain "github.com/shanewolff/go-rest/internal/domain"
 	mock "github.com/stretchr/testify/mock"
 )
 
