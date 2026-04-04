@@ -51,6 +51,25 @@ The project has been refactored to strictly follow Dependency Injection (DI) pri
 *   **Injected Secrets**: Middleware no longer uses hardcoded secrets; the `apiToken` is injected into the web handler during initialization.
 *   **Structured Logging**: The project uses `uber-go/zap` for high-performance, structured logging. The logger is initialized in the entry point and injected into adapters, ensuring consistent and searchable logs.
 
+## 🧪 Testing
+
+The project uses `stretchr/testify` for assertions and mocking.
+
+### Running Tests
+To run all unit tests in the project:
+```bash
+go test ./...
+```
+
+For verbose output:
+```bash
+go test -v ./...
+```
+
+### Testing Strategy
+*   **Unit Tests**: Located alongside the code (e.g., `item_service_test.go`). These use mocks to isolate the component being tested.
+*   **Mocks**: We use `testify/mock` to create mock implementations of our interfaces (`ItemRepository`, `ItemService`), allowing us to test each layer in isolation.
+
 ---
 
 ## 🚀 Gin Framework Concepts Covered
