@@ -130,6 +130,45 @@ Legacy commands:
 - `go mod tidy`
 - `go run cmd/api/main.go`
 
+### Running with Docker
+
+You can run the entire stack (API + Database) using Docker Compose:
+
+```bash
+docker-compose up --build
+```
+
+The API will be accessible at `http://localhost:8080`.
+
+### Debugging with Docker and GoLand
+
+To debug the application running inside a Docker container using GoLand, follow these steps:
+
+#### 1. Start the Debug Container
+Run the following command to start the API in debug mode along with the database:
+```bash
+docker-compose up api-debug
+```
+The container will start and Delve (the Go debugger) will wait for a connection on port `40000`.
+
+#### 2. Configure GoLand
+1.  Open the project in **GoLand**.
+2.  Go to **Run** -> **Edit Configurations...**.
+3.  Click the **+** button and select **Go Remote**.
+4.  Configure the settings:
+    *   **Name**: `Docker Debug`
+    *   **Host**: `localhost`
+    *   **Port**: `40000`
+5.  Click **OK**.
+
+#### 3. Start Debugging
+1.  Set your breakpoints in the Go source code.
+2.  Select the `Docker Debug` configuration from the run configuration dropdown.
+3.  Click the **Debug** icon (or press `Shift + F9`).
+4.  GoLand will connect to the container, and you can now debug your code as if it were running locally.
+
+---
+
 ### Configuration (Environment Variables)
 The project uses environment variables for configuration. For local development, these are loaded from a `.env` file in the project root.
 
