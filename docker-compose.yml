@@ -14,12 +14,13 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   api:
-    build: .
+    build:
+      context: .
+      target: final
     container_name: go-rest-api
     depends_on:
       - db
     environment:
-      # We use 'db' as the host here to match the service name
       - DB_DSN=host=db user=postgres password=postgres dbname=postgres port=5432 sslmode=disable TimeZone=UTC
       - API_TOKEN=secret123
       - SERVER_ADDR=:8080
@@ -27,6 +28,27 @@ services:
       - APP_ENV=development
     ports:
       - "8080:8080"
+
+  api-debug:
+    build:
+      context: .
+      target: debug
+    container_name: go-rest-api-debug
+    depends_on:
+      - db
+    security_opt:
+      - "seccomp:unconfined"
+    cap_add:
+      - SYS_PTRACE
+    environment:
+      - DB_DSN=host=db user=postgres password=postgres dbname=postgres port=5432 sslmode=disable TimeZone=UTC
+      - API_TOKEN=secret123
+      - SERVER_ADDR=:8080
+      - LOG_LEVEL=debug
+      - APP_ENV=development
+    ports:
+      - "8080:8080"
+      - "40000:40000"
 
 volumes:
   postgres_data:

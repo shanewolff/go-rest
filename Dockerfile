@@ -17,25 +17,30 @@ RUN go mod download
 COPY . .
 
 # Build the application
-# CGO_ENABLED=0 for a static binary
 RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/api/main.go
 
-# Final stage
-FROM alpine:latest
+# --- Debug Build ---
+FROM builder AS debug-builder
+# Install Delve
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
+# Build with optimizations disabled
+RUN CGO_ENABLED=0 GOOS=linux go build -gcflags="all=-N -l" -o main-debug ./cmd/api/main.go
 
-# Install CA certificates for HTTPS requests
+# --- Final Stage ---
+FROM alpine:latest AS final
+
 RUN apk --no-cache add ca-certificates
-
 WORKDIR /root/
-
-# Copy the binary from the builder stage
 COPY --from=builder /app/main .
-
-# Copy .env file if it exists (optional, as env vars can be passed at runtime)
-# COPY .env .
-
-# Expose the port defined in GEMINI.md
 EXPOSE 8080
-
-# Run the binary
 CMD ["./main"]
+
+# --- Debug Final Stage ---
+FROM alpine:latest AS debug
+RUN apk --no-cache add ca-certificates libc6-compat
+WORKDIR /root/
+COPY --from=debug-builder /app/main-debug ./main
+COPY --from=debug-builder /go/bin/dlv /usr/local/bin/dlv
+EXPOSE 8080 40000
+# Run the application via Delve
+CMD ["dlv", "--listen=:40000", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "./main"]
