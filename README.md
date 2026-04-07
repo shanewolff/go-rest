@@ -132,7 +132,7 @@ To create a new pair of SQL migration files (up and down):
 task migrate:create -- your_migration_name
 ```
 
-This will generate files in `internal/adapters/db/migrations/` using a sequential numbering format.
+This will generate files in `internal/adapters/db/migrations/` using a UTC timestamp format.
 
 ---
 

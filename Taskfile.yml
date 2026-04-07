@@ -84,7 +84,7 @@ tasks:
   migrate:create:
     desc: "Create a new database migration file (Usage: task migrate:create -- <name>)"
     cmds:
-      - migrate create -ext sql -dir internal/adapters/db/migrations -seq {{.CLI_ARGS}}
+      - migrate create -ext sql -dir internal/adapters/db/migrations {{.CLI_ARGS}}
 
   migrate:up:
     desc: Run all pending database migrations
