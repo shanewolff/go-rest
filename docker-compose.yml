@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    container_name: go-rest-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: .
+    container_name: go-rest-api
+    depends_on:
+      - db
+    environment:
+      # We use 'db' as the host here to match the service name
+      - DB_DSN=host=db user=postgres password=postgres dbname=postgres port=5432 sslmode=disable TimeZone=UTC
+      - API_TOKEN=secret123
+      - SERVER_ADDR=:8080
+      - LOG_LEVEL=debug
+      - APP_ENV=development
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
