@@ -86,3 +86,8 @@ Endpoints under `/api/v1` are protected by `AuthMiddleware`. Requests must inclu
 - `internal/core/`: Application services and business logic.
 - `internal/domain/`: Core entities and port interfaces.
 - `internal/logger/`: Centralized logger configuration.
+
+## General Instructions
+
+- All plans should be saved in `plans` directory.
+- New implementations or code changes should be documented in the `README.md` appropriately.

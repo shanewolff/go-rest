@@ -1,0 +1,9 @@
+CREATE TABLE items (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    price NUMERIC(10, 2) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
+);
+CREATE INDEX idx_items_deleted_at ON items(deleted_at);

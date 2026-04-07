@@ -80,3 +80,18 @@ tasks:
     desc: Run golangci-lint (requires installation)
     cmds:
       - golangci-lint run ./...
+
+  migrate:create:
+    desc: "Create a new database migration file (Usage: task migrate:create -- <name>)"
+    cmds:
+      - migrate create -ext sql -dir internal/adapters/db/migrations -seq {{.CLI_ARGS}}
+
+  migrate:up:
+    desc: Run all pending database migrations
+    cmds:
+      - . .env && migrate -path internal/adapters/db/migrations -database "$DB_URL" up
+
+  migrate:down:
+    desc: Revert the last database migration
+    cmds:
+      - . .env && migrate -path internal/adapters/db/migrations -database "$DB_URL" down 1

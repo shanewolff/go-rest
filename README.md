@@ -17,7 +17,8 @@ This project follows Go's standard project layout conventions.
 /internal
   /adapters      <-- Implementations of ports
     /db
-      connection.go           <-- DB initialization and migrations
+      /migrations             <-- SQL migration files
+      connection.go           <-- DB initialization
       postgres_repository.go  <-- Outbound Adapter for Items
       postgres_user_repository.go <-- Outbound Adapter for Users
     /web
@@ -104,11 +105,46 @@ The configuration for mockery is defined in `.mockery.yaml`.
 
 ---
 
+## 🗄️ Database Migrations
+
+The project uses [golang-migrate/migrate](https://github.com/golang-migrate/migrate) for versioned, explicit database
+migrations. Automatic schema migration via GORM is disabled to ensure better control over schema changes.
+
+### Running Migrations
+
+To apply all pending migrations:
+
+```bash
+task migrate:up
+```
+
+To revert the last applied migration:
+
+```bash
+task migrate:down
+```
+
+### Creating a New Migration
+
+To create a new pair of SQL migration files (up and down):
+
+```bash
+task migrate:create -- your_migration_name
+```
+
+This will generate files in `internal/adapters/db/migrations/` using a sequential numbering format.
+
+---
+
 ## 🛠 How to Run the Project
 
 ### Prerequisites
 1.  **Go**: Make sure Go is installed (`go version`).
 2.  **PostgreSQL**: You need a running PostgreSQL database. 
+3. **golang-migrate CLI**: Required for running migrations. If not installed, you can install it via:
+   ```bash
+   go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+   ```
 
 You can easily start a PostgreSQL instance using Docker:
 ```bash
@@ -126,11 +162,15 @@ The project uses [Task](https://taskfile.dev/) as a task runner for a simplified
     ```bash
     task db:start
     ```
-3.  Download dependencies:
+3. Run migrations:
+   ```bash
+   task migrate:up
+   ```
+4. Download dependencies:
     ```bash
     task tidy
     ```
-4.  Start the Go server:
+5. Start the Go server:
     ```bash
     task run
     ```
@@ -140,7 +180,10 @@ The project uses environment variables for configuration. For local development,
 
 Default values are provided for local development if neither `.env` nor system variables are set:
 *   `DB_DSN`: PostgreSQL connection string (Default: `host=localhost user=postgres password=postgres dbname=postgres port=5432 sslmode=disable TimeZone=UTC`)
+* `DB_URL`: Database URL for migrations (Default:
+  `postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable`)
 * `API_TOKEN`: Legacy secret token for `X-API-Token` header (Default: `secret123`)
+
 * `JWT_SECRET`: Secret key used for signing JWTs (Default: `super-secret-key`)
 * `JWT_EXPIRATION`: Duration before a token expires (Default: `24h`)
 *   `SERVER_ADDR`: Port the server listens on (Default: `:8080`)
