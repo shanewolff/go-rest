@@ -20,7 +20,7 @@ func TestGetItems(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	mockService := mocks.NewItemService(t)
 	logger := zap.NewNop()
-	handler := NewItemHandler(mockService, "test-token", logger)
+	handler := NewItemHandler(mockService, logger)
 
 	expectedItems := []domain.Item{
 		{ID: 1, Title: "Item 1", Price: 10.0},
@@ -47,7 +47,7 @@ func TestGetItem(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	mockService := mocks.NewItemService(t)
 	logger := zap.NewNop()
-	handler := NewItemHandler(mockService, "test-token", logger)
+	handler := NewItemHandler(mockService, logger)
 
 	t.Run("success", func(t *testing.T) {
 		expectedItem := &domain.Item{ID: 1, Title: "Item 1", Price: 10.0}
@@ -86,7 +86,7 @@ func TestCreateItem(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	mockService := mocks.NewItemService(t)
 	logger := zap.NewNop()
-	handler := NewItemHandler(mockService, "test-token", logger)
+	handler := NewItemHandler(mockService, logger)
 
 	reqBody := domain.CreateItemRequest{Title: "New Item", Price: 15.0}
 	expectedItem := &domain.Item{ID: 1, Title: "New Item", Price: 15.0}
@@ -103,34 +103,4 @@ func TestCreateItem(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code)
-}
-
-func TestAuthMiddleware(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	logger := zap.NewNop()
-	handler := NewItemHandler(nil, "secret-key", logger)
-
-	r := gin.New()
-	r.Use(handler.AuthMiddleware())
-	r.GET("/protected", func(c *gin.Context) {
-		c.Status(http.StatusOK)
-	})
-
-	t.Run("authorized", func(t *testing.T) {
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/protected", nil)
-		req.Header.Set("X-API-Token", "secret-key")
-		r.ServeHTTP(w, req)
-
-		assert.Equal(t, http.StatusOK, w.Code)
-	})
-
-	t.Run("unauthorized", func(t *testing.T) {
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/protected", nil)
-		req.Header.Set("X-API-Token", "wrong-key")
-		r.ServeHTTP(w, req)
-
-		assert.Equal(t, http.StatusUnauthorized, w.Code)
-	})
 }

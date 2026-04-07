@@ -18,16 +18,21 @@ This project follows Go's standard project layout conventions.
   /adapters      <-- Implementations of ports
     /db
       connection.go           <-- DB initialization and migrations
-      postgres_repository.go  <-- Outbound Adapter for PostgreSQL
+      postgres_repository.go  <-- Outbound Adapter for Items
+      postgres_user_repository.go <-- Outbound Adapter for Users
     /web
-      gin_handler.go          <-- Inbound Adapter for Gin
+      gin_handler.go          <-- Inbound Adapter for Items
+      auth_handler.go         <-- Inbound Adapter for Authentication
+      middleware.go           <-- JWT and API Token middlewares
   /config
     config.go        <-- Configuration loading and environment variables
   /core
-    item_service.go  <-- Core application logic, implements ItemService port
+    item_service.go  <-- Core item logic
+    auth_service.go  <-- Core authentication logic
   /domain
-    item.go          <-- Core business models (entities)
-    ports.go         <-- Port interfaces (ItemService, ItemRepository)
+    item.go          <-- Item business models
+    user.go          <-- User and Auth business models
+    ports.go         <-- Port interfaces (Services, Repositories)
 go.mod
 README.md
 ```
@@ -46,9 +51,12 @@ README.md
 ## 🏗 Dependency Injection & Clean Code
 
 The project has been refactored to strictly follow Dependency Injection (DI) principles:
-*   **Constructor Injection**: All services and adapters are initialized via constructors (e.g., `NewItemService`, `NewItemHandler`) that clearly define their dependencies.
+
+* **Constructor Injection**: All services and adapters are initialized via constructors (e.g., `NewItemService`,
+  `NewAuthService`, `NewItemHandler`) that clearly define their dependencies.
 *   **Decoupled DB**: The database connection logic is separated from the repository implementation, allowing the repository to be tested with any `*gorm.DB` handle.
-*   **Injected Secrets**: Middleware no longer uses hardcoded secrets; the `apiToken` is injected into the web handler during initialization.
+* **JWT Authentication**: The application uses JSON Web Tokens (JWT) for secure authentication. Passwords are hashed
+  using `bcrypt` before being stored in the database.
 *   **Structured Logging**: The project uses `uber-go/zap` for high-performance, structured logging. The logger is initialized in the entry point and injected into adapters, ensuring consistent and searchable logs.
 
 ## 🧪 Testing
@@ -58,27 +66,26 @@ The project uses `stretchr/testify` for assertions and mocking.
 ### Running Tests
 To run all unit tests in the project:
 ```bash
-go test ./...
+task test
 ```
 
 For verbose output:
 ```bash
-go test -v ./...
+task test-v
 ```
 
 ### Testing Strategy
-*   **Unit Tests**: Located alongside the code (e.g., `item_service_test.go`). These use mocks to isolate the component being tested.
-*   **Mocks**: We use [mockery](https://github.com/vektra/mockery) to automatically generate mock implementations of our interfaces (`ItemRepository`, `ItemService`). Mocks are stored in `internal/mocks`.
+
+* **Unit Tests**: Located alongside the code (e.g., `item_service_test.go`, `auth_service_test.go`). These use mocks to
+  isolate the component being tested.
+* **Mocks**: We use [mockery](https://github.com/vektra/mockery) to automatically generate mock implementations of our
+  interfaces (`ItemRepository`, `UserRepository`, `ItemService`, `AuthService`). Mocks are stored in `internal/mocks`.
 
 #### Generating Mocks
-To generate or update mocks, you need to have `mockery` installed:
-```bash
-go install github.com/vektra/mockery/v2@latest
-```
 
-Then, run the following command in the project root:
+To generate or update mocks:
 ```bash
-mockery
+task mock
 ```
 The configuration for mockery is defined in `.mockery.yaml`.
 
@@ -86,11 +93,13 @@ The configuration for mockery is defined in `.mockery.yaml`.
 
 ## 🚀 Gin Framework Concepts Covered
 
-*   **Routing & Grouping**: We use `router.Group("/api/v1")` to organize endpoints and apply middleware to specific sets of routes.
+* **Routing & Grouping**: We use `router.Group("/api/v1")` for protected resources and `router.Group("/auth")` for
+  public authentication endpoints.
 *   **Middleware**: Functions that run before your main handler.
     *   *Global Middleware*: `CustomLogger` measures how long every single request takes.
-    *   *Group Middleware*: `AuthMiddleware` checks for an `X-API-Token` header.
-*   **Data Validation**: Using Gin's integration with the `validator` package. In `domain/item.go`, tags like `binding:"required,min=3"` ensure incoming JSON automatically meets our rules.
+    * *Auth Middleware*: `JWTAuthMiddleware` validates the Bearer token in the `Authorization` header.
+* **Data Validation**: Using Gin's integration with the `validator` package. In `domain/item.go` and `domain/user.go`,
+  tags like `binding:"required,min=6"` ensure incoming JSON automatically meets our rules.
 *   **Path Parameters**: Extracting variables from the URL, like `:id` in `router.GET("/items/:id")`.
 
 ---
@@ -103,7 +112,7 @@ The configuration for mockery is defined in `.mockery.yaml`.
 
 You can easily start a PostgreSQL instance using Docker:
 ```bash
-docker run --name my-postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
+task db:start
 ```
 
 ### Setup & Run
@@ -126,78 +135,48 @@ The project uses [Task](https://taskfile.dev/) as a task runner for a simplified
     task run
     ```
 
-Legacy commands:
-- `go mod tidy`
-- `go run cmd/api/main.go`
-
-### Running with Docker
-
-You can run the entire stack (API + Database) using Docker Compose:
-
-```bash
-docker-compose up --build
-```
-
-The API will be accessible at `http://localhost:8080`.
-
-### Debugging with Docker and GoLand
-
-To debug the application running inside a Docker container using GoLand, follow these steps:
-
-#### 1. Start the Debug Container
-Run the following command to start the API in debug mode along with the database:
-```bash
-docker-compose up api-debug
-```
-The container will start and Delve (the Go debugger) will wait for a connection on port `40000`.
-
-#### 2. Configure GoLand
-1.  Open the project in **GoLand**.
-2.  Go to **Run** -> **Edit Configurations...**.
-3.  Click the **+** button and select **Go Remote**.
-4.  Configure the settings:
-    *   **Name**: `Docker Debug`
-    *   **Host**: `localhost`
-    *   **Port**: `40000`
-5.  Click **OK**.
-
-#### 3. Start Debugging
-1.  Set your breakpoints in the Go source code.
-2.  Select the `Docker Debug` configuration from the run configuration dropdown.
-3.  Click the **Debug** icon (or press `Shift + F9`).
-4.  GoLand will connect to the container, and you can now debug your code as if it were running locally.
-
----
-
 ### Configuration (Environment Variables)
 The project uses environment variables for configuration. For local development, these are loaded from a `.env` file in the project root.
 
 Default values are provided for local development if neither `.env` nor system variables are set:
 *   `DB_DSN`: PostgreSQL connection string (Default: `host=localhost user=postgres password=postgres dbname=postgres port=5432 sslmode=disable TimeZone=UTC`)
-*   `API_TOKEN`: Secret token for `X-API-Token` header (Default: `secret123`)
+* `API_TOKEN`: Legacy secret token for `X-API-Token` header (Default: `secret123`)
+* `JWT_SECRET`: Secret key used for signing JWTs (Default: `super-secret-key`)
+* `JWT_EXPIRATION`: Duration before a token expires (Default: `24h`)
 *   `SERVER_ADDR`: Port the server listens on (Default: `:8080`)
 *   `LOG_LEVEL`: Logger verbosity: `debug`, `info`, `warn`, `error` (Default: `info`)
 *   `APP_ENV`: Application environment: `development` for console-friendly logs, `production` for JSON logs (Default: `production`)
 
 ### Testing the API
 
+The API is secured with JWT. You must first register and login to get a token.
 
-The API is secured with a simple token. You must include the header `X-API-Token: secret123` in your requests.
+**1. Register a User:**
+```bash
+curl -X POST http://localhost:8080/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "johndoe", "password": "securepassword"}'
+```
 
-**1. Create an Item:**
+**2. Login to get a Token:**
+
+```bash
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "johndoe", "password": "securepassword"}'
+```
+
+*Note the `"token": "..."` in the response.*
+
+**3. Create an Item (using the token):**
 ```bash
 curl -X POST http://localhost:8080/api/v1/items \
-  -H "X-API-Token: secret123" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json" \
-  -d '{"title": "Learning Go", "price": 49.99}'
+  -d '{"title": "Learning Go JWT", "price": 59.99}'
 ```
 
-**2. Get All Items:**
+**4. Get All Items:**
 ```bash
-curl -H "X-API-Token: secret123" http://localhost:8080/api/v1/items
-```
-
-**3. Get a Specific Item (replace 1 with your item ID):**
-```bash
-curl -H "X-API-Token: secret123" http://localhost:8080/api/v1/items/1
+curl -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:8080/api/v1/items
 ```

@@ -19,3 +19,16 @@ type ItemService interface {
 	CreateItem(req CreateItemRequest) (*Item, error)
 	DeleteItem(id uint) error
 }
+
+// UserRepository is an outbound port for user persistence.
+type UserRepository interface {
+	GetByUsername(username string) (*User, error)
+	Create(user *User) error
+}
+
+// AuthService is an inbound port for authentication logic.
+type AuthService interface {
+	Register(req RegisterRequest) (*User, error)
+	Login(req LoginRequest) (string, *User, error)
+	ValidateToken(tokenString string) (uint, error)
+}

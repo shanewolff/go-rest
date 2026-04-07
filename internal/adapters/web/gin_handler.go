@@ -14,48 +14,14 @@ import (
 // This package acts as the Inbound Adapter for Gin Web Framework.
 
 type ItemHandler struct {
-	service  domain.ItemService
-	apiToken string
-	logger   *zap.Logger
+	service domain.ItemService
+	logger  *zap.Logger
 }
 
-func NewItemHandler(s domain.ItemService, apiToken string, l *zap.Logger) *ItemHandler {
+func NewItemHandler(s domain.ItemService, l *zap.Logger) *ItemHandler {
 	return &ItemHandler{
-		service:  s,
-		apiToken: apiToken,
-		logger:   l,
-	}
-}
-
-// SetupRouter initializes a new Gin router, registers middleware, and configures routes for the handler.
-func (h *ItemHandler) SetupRouter() *gin.Engine {
-	router := h.NewRouter()
-	h.RegisterRoutes(router)
-	return router
-}
-
-// NewRouter initializes a new Gin router with middleware
-func (h *ItemHandler) NewRouter() *gin.Engine {
-	router := gin.New() // Use gin.New() to have full control over middleware
-	router.Use(gin.Recovery())
-	router.Use(h.CustomLogger())
-
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "pong"})
-	})
-
-	return router
-}
-
-// RegisterRoutes configures the routes for the item handler
-func (h *ItemHandler) RegisterRoutes(router *gin.Engine) {
-	api := router.Group("/api/v1")
-	api.Use(h.AuthMiddleware())
-	{
-		api.GET("/items", h.GetItems)
-		api.GET("/items/:id", h.GetItem)
-		api.POST("/items", h.CreateItem)
-		api.DELETE("/items/:id", h.DeleteItem)
+		service: s,
+		logger:  l,
 	}
 }
 
@@ -141,20 +107,5 @@ func (h *ItemHandler) CustomLogger() gin.HandlerFunc {
 			zap.String("user-agent", c.Request.UserAgent()),
 			zap.Duration("latency", latency),
 		)
-	}
-}
-
-func (h *ItemHandler) AuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		token := c.GetHeader("X-API-Token")
-		if token != h.apiToken {
-			h.logger.Warn("Unauthorized access attempt",
-				zap.String("ip", c.ClientIP()),
-				zap.String("path", c.Request.URL.Path),
-			)
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized API token"})
-			return
-		}
-		c.Next()
 	}
 }

@@ -4,6 +4,8 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/shanewolff/go-rest/internal/domain"
 )
 
 // InitDB initializes the database connection and performs migrations.
@@ -15,7 +17,7 @@ func InitDB(dsn string, logger *zap.Logger) (*gorm.DB, error) {
 
 	// Auto Migrate the schema for our internal DB models
 	// This ensures the database schema matches our DB models.
-	err = db.AutoMigrate(&Item{})
+	err = db.AutoMigrate(&Item{}, &domain.User{})
 	if err != nil {
 		return nil, err
 	}
