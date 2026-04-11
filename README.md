@@ -1,247 +1,200 @@
-# Go Gin REST API - Learning Project
+# Go Gin REST API - Hexagonal Architecture
 
-Welcome to your Go learning project! This repository contains a simple REST API built with the [Gin Web Framework](https://gin-gonic.com/) and [GORM](https://gorm.io/) (connected to PostgreSQL). 
-
-The project has been refactored to follow **Hexagonal Architecture** (also known as Ports and Adapters) to demonstrate how to build maintainable, decoupled, and testable applications in Go.
-
----
-
-## 🏗 Directory Structure
-
-This project follows Go's standard project layout conventions.
-
-```
-/cmd
-  /api
-    main.go      <-- Application entry point, dependency injection
-/internal
-  /adapters      <-- Implementations of ports
-    /db
-      /migrations             <-- SQL migration files
-      connection.go           <-- DB initialization
-      postgres_repository.go  <-- Outbound Adapter for Items
-      postgres_user_repository.go <-- Outbound Adapter for Users
-    /web
-      gin_handler.go          <-- Inbound Adapter for Items
-      auth_handler.go         <-- Inbound Adapter for Authentication
-      middleware.go           <-- JWT and API Token middlewares
-  /config
-    config.go        <-- Configuration loading and environment variables
-  /core
-    item_service.go  <-- Core item logic
-    auth_service.go  <-- Core authentication logic
-  /domain
-    item.go          <-- Item business models
-    user.go          <-- User and Auth business models
-    ports.go         <-- Port interfaces (Services, Repositories)
-go.mod
-README.md
-```
-
-### Hexagonal Architecture (Ports & Adapters)
-
-*   **`/cmd`**: Contains the application's entry point (`cmd/api/main.go`). Its only job is to load configuration, wire together the dependencies (Dependency Injection) from the `internal` directory, and start the server.
-*   **`/internal`**: This is the heart of the application.
-    *   **`/internal/domain`**: The very center of the application. It has **zero dependencies** on external libraries.
-    *   **`/internal/core`**: Implements the business logic. It depends only on the domain and is injected with outbound ports.
-    *   **`/internal/adapters`**: The bridge between the core logic and the outside world. Components here are injected with their dependencies (e.g., the DB handle).
-    *   **`/internal/config`**: Manages application settings, allowing for clean injection of secrets and parameters.
+Welcome to the **Go Gin REST API** learning project. This repository serves as a definitive guide and production-ready
+template for building maintainable, decoupled, and highly testable Go applications using **Hexagonal Architecture** (
+Ports and Adapters).
 
 ---
 
-## 🏗 Dependency Injection & Clean Code
+## 📖 Table of Contents
 
-The project has been refactored to strictly follow Dependency Injection (DI) principles:
-
-* **Constructor Injection**: All services and adapters are initialized via constructors (e.g., `NewItemService`,
-  `NewAuthService`, `NewItemHandler`) that clearly define their dependencies.
-*   **Decoupled DB**: The database connection logic is separated from the repository implementation, allowing the repository to be tested with any `*gorm.DB` handle.
-* **JWT Authentication**: The application uses JSON Web Tokens (JWT) for secure authentication. Passwords are hashed
-  using `bcrypt` before being stored in the database.
-*   **Structured Logging**: The project uses `uber-go/zap` for high-performance, structured logging. The logger is initialized in the entry point and injected into adapters, ensuring consistent and searchable logs.
-
-## 🧪 Testing
-
-The project uses `stretchr/testify` for assertions and mocking.
-
-### Running Tests
-To run all unit tests in the project:
-```bash
-task test
-```
-
-For verbose output:
-```bash
-task test-v
-```
-
-### Code Coverage
-
-The project includes tasks to check and visualize test coverage while excluding generated mocks.
-
-- To see a summary of statement coverage per package:
-  ```bash
-  task test:coverage
-  ```
-- To see detailed function-level coverage:
-  ```bash
-  task test:coverage-out
-  ```
-- To view the coverage report in your browser:
-  ```bash
-  task test:coverage-html
-  ```
-
-### Testing Strategy
-
-* **Unit Tests**: Located alongside the code (e.g., `item_service_test.go`, `auth_service_test.go`). These use mocks to
-  isolate the component being tested.
-* **Mocks**: We use [mockery](https://github.com/vektra/mockery) to automatically generate mock implementations of our
-  interfaces (`ItemRepository`, `UserRepository`, `ItemService`, `AuthService`). Mocks are stored in `internal/mocks`.
-
-#### Generating Mocks
-
-To generate or update mocks:
-```bash
-task mock
-```
-The configuration for mockery is defined in `.mockery.yaml`.
+- [Project Overview](#-project-overview)
+- [Architecture Deep Dive](#-architecture-deep-dive)
+- [Business Features](#-business-features)
+- [Getting Started](#-getting-started)
+- [Developer Maintenance & Workflow](#-developer-maintenance--workflow)
+    - [Task Runner (Taskfile)](#task-runner-taskfile)
+    - [Testing & Coverage Strategy](#testing--coverage-strategy)
+    - [Mocks & Dependency Injection](#mocks--dependency-injection)
+    - [Git Hooks & Quality Gates](#git-hooks--quality-gates)
+- [Security & Authentication](#-security--authentication)
+- [Database Management](#-database-management)
+- [API Reference](#-api-reference)
 
 ---
 
-## 🚀 Gin Framework Concepts Covered
+## 🌟 Project Overview
 
-* **Routing & Grouping**: We use `router.Group("/api/v1")` for protected resources and `router.Group("/auth")` for
-  public authentication endpoints.
-*   **Middleware**: Functions that run before your main handler.
-    *   *Global Middleware*: `CustomLogger` measures how long every single request takes.
-    * *Auth Middleware*: `JWTAuthMiddleware` validates the Bearer token in the `Authorization` header.
-* **Data Validation**: Using Gin's integration with the `validator` package. In `domain/item.go` and `domain/user.go`,
-  tags like `binding:"required,min=6"` ensure incoming JSON automatically meets our rules.
-*   **Path Parameters**: Extracting variables from the URL, like `:id` in `router.GET("/items/:id")`.
+This project demonstrates a modern RESTful API built with:
 
----
-
-## 🗄️ Database Migrations
-
-The project uses [golang-migrate/migrate](https://github.com/golang-migrate/migrate) for versioned, explicit database
-migrations. Automatic schema migration via GORM is disabled to ensure better control over schema changes.
-
-### Running Migrations
-
-To apply all pending migrations:
-
-```bash
-task migrate:up
-```
-
-To revert the last applied migration:
-
-```bash
-task migrate:down
-```
-
-### Creating a New Migration
-
-To create a new pair of SQL migration files (up and down):
-
-```bash
-task migrate:create -- your_migration_name
-```
-
-This will generate files in `internal/adapters/db/migrations/` using a UTC timestamp format.
+- **Framework:** [Gin Gonic](https://gin-gonic.com/) (High-performance HTTP web framework)
+- **ORM:** [GORM](https://gorm.io/) with PostgreSQL
+- **Logging:** [Zap](https://github.com/uber-go/zap) (Structured, lightning-fast logging)
+- **Validation:** [Go Playground Validator](https://github.com/go-playground/validator)
+- **Architecture:** Hexagonal (Ports & Adapters) for maximum decoupling.
 
 ---
 
-## 🛠 How to Run the Project
+## 🏗 Architecture Deep Dive
 
-### Prerequisites
-1.  **Go**: Make sure Go is installed (`go version`).
-2.  **PostgreSQL**: You need a running PostgreSQL database. 
-3. **golang-migrate CLI**: Required for running migrations. If not installed, you can install it via:
-   ```bash
-   go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-   ```
-4. **Git Hooks**: We use Lefthook to enforce code quality, security (`gosec`), conventional commits, and a minimum of
-   80% test coverage. Install the hooks by running:
-   ```bash
-   task hooks:setup
-   ```
+The project is structured to separate business logic from technical implementation details (like databases or web
+frameworks).
 
-You can easily start a PostgreSQL instance using Docker:
-```bash
-task db:start
-```
+### The Layers
 
-### Setup & Run
-The project uses [Task](https://taskfile.dev/) as a task runner for a simplified developer experience.
+1. **Domain (`internal/domain`)**: The core. Contains business entities (`Item`, `User`) and **Port Interfaces**. It has
+   zero dependencies on external libraries or other layers.
+2. **Core/Application (`internal/core`)**: Implements the business logic (Services). It coordinates tasks and delegates
+   data persistence to the Domain Ports.
+3. **Adapters (`internal/adapters`)**:
+    * **Inbound (Primary)**: The Entry points. In this project, it's the **Web Adapter** (Gin handlers) that translates
+      HTTP requests into Domain calls.
+    * **Outbound (Secondary)**: External integrations. Here, it's the **DB Adapter** (GORM) that translates Domain calls
+      into SQL queries.
+4. **CMD (`cmd/api`)**: The "Main" entry point. Its sole responsibility is **Dependency Injection (DI)**—wiring the
+   adapters to the services and starting the engine.
 
-1.  List available tasks:
-    ```bash
-    task --list
-    ```
-2.  Start the database:
-    ```bash
-    task db:start
-    ```
-3. Run migrations:
-   ```bash
-   task migrate:up
-   ```
-4. Download dependencies:
-    ```bash
-    task tidy
-    ```
-5. Start the Go server:
-    ```bash
-    task run
-    ```
+---
 
-### Configuration (Environment Variables)
-The project uses environment variables for configuration. For local development, these are loaded from a `.env` file in the project root.
+## 🚀 Business Features
 
-Default values are provided for local development if neither `.env` nor system variables are set:
-*   `DB_DSN`: PostgreSQL connection string (Default: `host=localhost user=postgres password=postgres dbname=postgres port=5432 sslmode=disable TimeZone=UTC`)
-* `DB_URL`: Database URL for migrations (Default:
-  `postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable`)
-* `API_TOKEN`: Legacy secret token for `X-API-Token` header (Default: `secret123`)
+The API provides a complete flow for managing items within a secured environment:
 
-* `JWT_SECRET`: Secret key used for signing JWTs (Default: `super-secret-key`)
-* `JWT_EXPIRATION`: Duration before a token expires (Default: `24h`)
-*   `SERVER_ADDR`: Port the server listens on (Default: `:8080`)
-*   `LOG_LEVEL`: Logger verbosity: `debug`, `info`, `warn`, `error` (Default: `info`)
-*   `APP_ENV`: Application environment: `development` for console-friendly logs, `production` for JSON logs (Default: `production`)
+### Authentication & User Management
 
-### Testing the API
+- **User Registration**: Secure sign-up with password hashing (Bcrypt).
+- **JWT Login**: Issue JSON Web Tokens for stateless authentication.
+- **Identity Verification**: Middleware to protect sensitive routes.
 
-The API is secured with JWT. You must first register and login to get a token.
+### Item Management
 
-**1. Register a User:**
-```bash
-curl -X POST http://localhost:8080/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"username": "johndoe", "password": "securepassword"}'
-```
+- **Create**: Add new items with title and price.
+- **List**: Retrieve all items.
+- **Detail**: Fetch a single item by its ID.
+- **Delete**: Remove items from the catalog.
 
-**2. Login to get a Token:**
+---
+
+## 🏁 Getting Started
+
+### 1. Prerequisites
+
+- **Go 1.26+**
+- **Docker** (for running PostgreSQL)
+- **Task** runner: `brew install go-task` (or `go install github.com/go-task/task/v3/cmd/task@latest`)
+- **Migrate** tool: `go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest`
+
+### 2. Setup Environment
+
+Copy the example environment file:
 
 ```bash
-curl -X POST http://localhost:8080/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "johndoe", "password": "securepassword"}'
+cp example.env .env
 ```
 
-*Note the `"token": "..."` in the response.*
+### 3. Start the Engine
 
-**3. Create an Item (using the token):**
+Use the automated tasks to get running in seconds:
+```bash
+task db:start      # Starts PostgreSQL in Docker
+task migrate:up    # Runs database migrations
+task tidy          # Installs Go dependencies
+task run           # Starts the API server
+```
+
+---
+
+## 🛠 Developer Maintenance & Workflow
+
+### Task Runner (Taskfile)
+
+We use `Task` instead of `Make` for a better DX. Key commands:
+
+- `task run`: Start local development server.
+- `task test`: Run all tests.
+- `task mock`: Regenerate all mocks using Mockery.
+- `task lint`: Run golangci-lint.
+- `task clean`: Remove build artifacts and coverage files.
+
+### Testing & Coverage Strategy
+
+We maintain a strict **80% Minimum Coverage** threshold.
+
+- **Unit Tests**: Found in `*_test.go` files next to the source code.
+- **Centralized Coverage**: We use a custom script (`scripts/calculate_coverage.sh`) that excludes "noise" like mocks,
+  entry points (`main.go`), and boilerplate.
+- **Commands**:
+    - `task test:coverage`: Quick CLI summary.
+    - `task test:coverage-out`: Detailed function-level breakdown.
+    - `task test:coverage-html`: Visual report in your browser.
+
+### Mocks & Dependency Injection
+
+We use **Mockery** to generate type-safe mocks for our Port interfaces.
+
+- Interfaces are defined in `internal/domain/ports.go`.
+- Mocks are generated into `internal/mocks/`.
+- This allows us to test the `Core` logic without needing a real database.
+
+### Git Hooks & Quality Gates
+
+We use **Lefthook** to ensure no "bad code" is committed. The `pre-commit` hook automatically runs:
+
+1. **Linter**: `golangci-lint` to check for code smells.
+2. **Security Scan**: `gosec` to find potential security vulnerabilities.
+3. **Tests**: Runs `go test -short`.
+4. **Coverage Check**: Ensures the 80% threshold is met.
+5. **Formatters**: Runs `go fmt` and `goimports`.
+
+Set up hooks with: `task hooks:setup`
+
+---
+
+## 🔒 Security & Authentication
+
+- **Password Hashing**: We use `bcrypt` with a default cost of 10. Never store plain-text passwords!
+- **JWT (JSON Web Token)**:
+    - Signed with a `JWT_SECRET` from your `.env`.
+    - Included in requests via the `Authorization: Bearer <token>` header.
+- **Middleware**:
+    - `JWTAuthMiddleware`: Validates user identity for `/api/v1/*` routes.
+    - `APITokenMiddleware`: A secondary layer (legacy) for `X-API-Token` header validation.
+
+---
+
+## 🗄 Database Management
+
+We avoid GORM's `AutoMigrate` in favor of **Explicit Versioned Migrations**. This prevents unexpected schema changes in
+production.
+
+- **Migrations Path**: `internal/adapters/db/migrations/`
+- **Create New Migration**: `task migrate:create -- name_of_migration`
+- **Apply/Rollback**: `task migrate:up` or `task migrate:down`.
+
+---
+
+## 📡 API Reference
+
+### Auth Endpoints
+
+| Method | Endpoint         | Description          |
+|:-------|:-----------------|:---------------------|
+| `POST` | `/auth/register` | Create a new account |
+| `POST` | `/auth/login`    | Get a JWT token      |
+
+### Protected Endpoints (Requires Bearer Token)
+
+| Method   | Endpoint            | Description       |
+|:---------|:--------------------|:------------------|
+| `GET`    | `/api/v1/items`     | List all items    |
+| `GET`    | `/api/v1/items/:id` | Get item details  |
+| `POST`   | `/api/v1/items`     | Create a new item |
+| `DELETE` | `/api/v1/items/:id` | Remove an item    |
+
+#### Example Request (Create Item)
 ```bash
 curl -X POST http://localhost:8080/api/v1/items \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"title": "Learning Go JWT", "price": 59.99}'
-```
-
-**4. Get All Items:**
-```bash
-curl -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:8080/api/v1/items
+  -d '{"title": "Go Concurrency in Practice", "price": 45.00}'
 ```
