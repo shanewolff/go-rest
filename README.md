@@ -75,6 +75,23 @@ For verbose output:
 task test-v
 ```
 
+### Code Coverage
+
+The project includes tasks to check and visualize test coverage while excluding generated mocks.
+
+- To see a summary of statement coverage per package:
+  ```bash
+  task test:coverage
+  ```
+- To see detailed function-level coverage:
+  ```bash
+  task test:coverage-out
+  ```
+- To view the coverage report in your browser:
+  ```bash
+  task test:coverage-html
+  ```
+
 ### Testing Strategy
 
 * **Unit Tests**: Located alongside the code (e.g., `item_service_test.go`, `auth_service_test.go`). These use mocks to
@@ -144,6 +161,11 @@ This will generate files in `internal/adapters/db/migrations/` using a UTC times
 3. **golang-migrate CLI**: Required for running migrations. If not installed, you can install it via:
    ```bash
    go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+   ```
+4. **Git Hooks**: We use Lefthook to enforce code quality, security (`gosec`), conventional commits, and a minimum of
+   80% test coverage. Install the hooks by running:
+   ```bash
+   task hooks:setup
    ```
 
 You can easily start a PostgreSQL instance using Docker:

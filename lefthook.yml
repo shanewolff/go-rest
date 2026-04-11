@@ -1,0 +1,46 @@
+pre-commit:
+  parallel: true
+  commands:
+    go-fmt:
+      glob: "*.go"
+      run: go fmt ./...
+    go-imports:
+      glob: "*.go"
+      run: goimports -w {staged_files}
+    golangci-lint:
+      glob: "*.go"
+      run: golangci-lint run ./...
+    go-test:
+      glob: "*.go"
+      run: go test -short ./...
+    gosec:
+      glob: "*.go"
+      run: gosec -quiet ./...
+    check-coverage:
+      run: |
+        go test -short -coverprofile=coverage.out ./... > /dev/null
+        grep -v "_mock.go" coverage.out | grep -v "internal/mocks" | grep -v "cmd/api/main.go" > coverage_filtered.out
+        total_coverage=$(go tool cover -func=coverage_filtered.out | grep total | awk '{print substr($3, 1, length($3)-1)}')
+        rm -f coverage.out coverage_filtered.out
+        awk -v cov="$total_coverage" 'BEGIN { if (cov < 80.0) { print "Error: Test coverage is " cov "%, which is below the 80% threshold."; exit 1 } else { print "Test coverage is " cov "%" } }'
+    check-large-files:
+      run: |
+        for file in {staged_files}; do
+          size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
+          if [ "$size" -gt 1048576 ]; then
+            echo "Error: File $file is larger than 1MB."
+            exit 1
+          fi
+        done
+
+commit-msg:
+  commands:
+    lint-commit-msg:
+      run: |
+        msg=$(head -n 1 {1})
+        if ! echo "$msg" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\(.+\))?: .{1,50}'; then
+          echo "Error: Commit message does not follow conventional commits."
+          echo "Format: <type>(<scope>): <subject>"
+          echo "Example: feat: add new feature"
+          exit 1
+        fi

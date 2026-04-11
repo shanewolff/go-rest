@@ -33,7 +33,7 @@ func (m *Middleware) JWTAuthMiddleware() gin.HandlerFunc {
 		}
 
 		parts := strings.SplitN(authHeader, " ", 2)
-		if !(len(parts) == 2 && parts[0] == "Bearer") {
+		if len(parts) != 2 || parts[0] != "Bearer" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header must be in the format Bearer <token>"})
 			return
 		}

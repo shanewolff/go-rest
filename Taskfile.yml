@@ -40,6 +40,23 @@ tasks:
     cmds:
       - go test -v ./...
 
+  test:coverage:
+    desc: Run tests and display statement coverage for each package (excluding mocks)
+    cmds:
+      - go test -cover $(go list ./... | grep -v /mocks)
+
+  test:coverage-out:
+    desc: Run tests, generate a coverage profile, and show function-level coverage (excluding mocks)
+    cmds:
+      - go test -coverprofile=coverage.out $(go list ./... | grep -v /mocks)
+      - go tool cover -func=coverage.out
+
+  test:coverage-html:
+    desc: Run tests, generate a coverage profile, and open the HTML coverage report (excluding mocks)
+    cmds:
+      - go test -coverprofile=coverage.out $(go list ./... | grep -v /mocks)
+      - go tool cover -html=coverage.out
+
   mock:
     desc: Regenerate mocks using mockery
     cmds:
@@ -74,6 +91,7 @@ tasks:
     cmds:
       - rm -rf {{.BIN_DIR}}
       - rm -rf internal/mocks/*
+      - rm -f coverage.out
     ignore_error: true
 
   lint:
@@ -95,3 +113,11 @@ tasks:
     desc: Revert the last database migration
     cmds:
       - . .env && migrate -path internal/adapters/db/migrations -database "$DB_URL" down 1
+
+  hooks:setup:
+    desc: Install Lefthook, gosec, goimports, and set up Git hooks
+    cmds:
+      - go install github.com/evilmartians/lefthook@latest
+      - go install github.com/securego/gosec/v2/cmd/gosec@latest
+      - go install golang.org/x/tools/cmd/goimports@latest
+      - $(go env GOPATH)/bin/lefthook install

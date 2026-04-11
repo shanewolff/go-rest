@@ -83,4 +83,13 @@ func TestMiddleware_JWTAuthMiddleware(t *testing.T) {
 
 		assert.Equal(t, http.StatusUnauthorized, w.Code)
 	})
+
+	t.Run("invalid prefix", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/protected", nil)
+		req.Header.Set("Authorization", "Invalid valid-token")
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+	})
 }
