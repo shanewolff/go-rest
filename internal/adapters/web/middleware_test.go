@@ -93,3 +93,21 @@ func TestMiddleware_JWTAuthMiddleware(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, w.Code)
 	})
 }
+
+func TestMiddleware_CustomLogger(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	logger := zap.NewNop()
+	middleware := NewMiddleware(nil, "", logger)
+
+	r := gin.New()
+	r.Use(middleware.CustomLogger())
+	r.GET("/test", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/test", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}

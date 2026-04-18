@@ -193,22 +193,3 @@ func TestDeleteItem(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, w.Code)
 	})
 }
-
-func TestCustomLogger(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	mockService := mocks.NewItemService(t)
-	logger := zap.NewNop()
-	handler := NewItemHandler(mockService, logger)
-
-	r := gin.New()
-	r.Use(handler.CustomLogger())
-	r.GET("/test", func(c *gin.Context) {
-		c.Status(http.StatusOK)
-	})
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/test", nil)
-	r.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-}

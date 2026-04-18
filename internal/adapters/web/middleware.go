@@ -3,6 +3,7 @@ package web
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -21,6 +22,27 @@ func NewMiddleware(authService domain.AuthService, apiToken string, logger *zap.
 		authService: authService,
 		apiToken:    apiToken,
 		logger:      logger,
+	}
+}
+
+func (m *Middleware) CustomLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		startTime := time.Now()
+		path := c.Request.URL.Path
+		query := c.Request.URL.RawQuery
+
+		c.Next()
+
+		latency := time.Since(startTime)
+		m.logger.Info("Incoming Request",
+			zap.Int("status", c.Writer.Status()),
+			zap.String("method", c.Request.Method),
+			zap.String("path", path),
+			zap.String("query", query),
+			zap.String("ip", c.ClientIP()),
+			zap.String("user-agent", c.Request.UserAgent()),
+			zap.Duration("latency", latency),
+		)
 	}
 }
 

@@ -3,7 +3,6 @@ package web
 import (
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -85,27 +84,4 @@ func (h *ItemHandler) DeleteItem(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Item deleted successfully"})
-}
-
-// --- MIDDLEWARE ---
-
-func (h *ItemHandler) CustomLogger() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		startTime := time.Now()
-		path := c.Request.URL.Path
-		query := c.Request.URL.RawQuery
-
-		c.Next()
-
-		latency := time.Since(startTime)
-		h.logger.Info("Incoming Request",
-			zap.Int("status", c.Writer.Status()),
-			zap.String("method", c.Request.Method),
-			zap.String("path", path),
-			zap.String("query", query),
-			zap.String("ip", c.ClientIP()),
-			zap.String("user-agent", c.Request.UserAgent()),
-			zap.Duration("latency", latency),
-		)
-	}
 }
